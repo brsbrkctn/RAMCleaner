@@ -1,0 +1,14 @@
+# Project Rules for AI Assistants
+
+## Git & Identity Policy (MANDATORY)
+- All git commits and contributions MUST be made exclusively under:
+  - Name: Barış Berke Çetin
+  - Email: brsberkectn@gmail.com
+  - GitHub: https://github.com/brsbrkctn
+- Never add any AI tools, assistants, or third-party bots as co-authors, commit authors, or committers.
+- Never add "Co-authored-by:" trailers for AI tools.
+
+## Documentation
+- All README.md files must be written in English without an explicit Developer section.
+- User-facing planning docs, tasks, and reports must be written in Turkish.
+- Code comments and git commit messages must be in English.
