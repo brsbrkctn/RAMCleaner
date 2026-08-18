@@ -66,22 +66,22 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 2: ASCII Art Banner & Başlık
+# BÖLÜM 2: ASCII Art Banner & Başlık (RAM CLEANER)
 # ============================================================
 if (-not $Silent) {
     Write-Host ""
-    Write-Host "  ██████╗  █████╗ ███╗   ███╗     ██████╗██╗     ███████╗██████╗ ███╗   ██╗███████╗██████╗ " -ForegroundColor Cyan
-    Write-Host "  ██╔══██╗██╔══██╗████╗ ████║    ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║██╔════╝██╔══██╗" -ForegroundColor Cyan
-    Write-Host "  ██████╔╝███████║██╔████╔██║    ██║     ██║     █████╗  ██████╔╝██╔██╗ ██║█████╗  ██████╔╝" -ForegroundColor Cyan
-    Write-Host "  ██╔══██╗██╔══██╗██║╚██╔╝██║    ██║     ██║     ██╔══╝  ██╔══██╗██║╚██╗██║██╔══╝  ██╔══██╗" -ForegroundColor Cyan
-    Write-Host "  ██║  ██║██║  ██║██║ ╚═╝ ██║    ╚██████╗███████╗███████╗██║  ██║██║ ╚████║███████╗██║  ██║" -ForegroundColor Cyan
-    Write-Host "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
+    Write-Host "  ██████╗   █████╗  ███╗   ███╗     ██████╗ ██╗     ███████╗  █████╗  ███╗   ██╗ ███████╗ ██████╗ " -ForegroundColor Cyan
+    Write-Host "  ██╔══██╗ ██╔══██╗ ████╗ ████║    ██╔════╝ ██║     ██╔════╝ ██╔══██╗ ████╗  ██║ ██╔════╝ ██╔══██╗" -ForegroundColor Cyan
+    Write-Host "  ██████╔╝ ███████║ ██╔████╔██║    ██║      ██║     █████╗   ███████║ ██╔██╗ ██║ █████╗   ██████╔╝" -ForegroundColor Cyan
+    Write-Host "  ██╔══██╗ ██╔══██╗ ██║╚██╔╝██║    ██║      ██║     ██╔══╝   ██╔══██╗ ██║╚██╗██║ ██╔══╝   ██╔══██╗" -ForegroundColor Cyan
+    Write-Host "  ██║  ██║ ██║  ██║ ██║ ╚═╝ ██║    ╚██████╗ ███████╗███████╗ ██║  ██║ ██║ ╚████║ ███████╗ ██║  ██║" -ForegroundColor Cyan
+    Write-Host "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝     ╚═════╝ ╚══════╝╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝ ╚══════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
     Write-Host "                                   v1.2.0" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  👤 Barış Berke Çetin 2026  |  🌐 github.com/brsbrkctn" -ForegroundColor DarkGray
-    Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  [i] Barış Berke Çetin 2026  |  github.com/brsbrkctn" -ForegroundColor DarkGray
+    Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -204,7 +204,7 @@ function Format-RAMBar {
     if ($filledCount -gt $Length) { $filledCount = $Length }
     if ($filledCount -lt 0) { $filledCount = 0 }
     $emptyCount = $Length - $filledCount
-    $bar = ("█" * $filledCount) + ("░" * $emptyCount)
+    $bar = ("#" * $filledCount) + ("-" * $emptyCount)
     $pctStr = "$Percent%".PadLeft(4)
     return "[$bar] $pctStr"
 }
@@ -213,12 +213,12 @@ $ramBefore = Get-RAMInfo
 
 if (-not $Silent -and $ramBefore) {
     $barBefore = Format-RAMBar -Percent $ramBefore.Percent
-    Write-Host "  📊 RAM Durumu:" -ForegroundColor White
+    Write-Host "  [*] RAM Durumu:" -ForegroundColor White
     Write-Host "  Önce  : " -NoNewline -ForegroundColor Gray
     Write-Host $barBefore -NoNewline -ForegroundColor Yellow
     Write-Host "  ($($ramBefore.UsedGB) GB / $($ramBefore.TotalGB) GB)" -ForegroundColor Gray
     Write-Host ""
-    Write-Host "  ⚡ Optimizasyon İşlemleri:" -ForegroundColor White
+    Write-Host "  [*] Optimizasyon İşlemleri:" -ForegroundColor White
 }
 
 # ============================================================
@@ -235,7 +235,7 @@ function Execute-Step {
         return
     }
 
-    $spinner = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+    $spinner = @('-', '\', '|', '/')
     for ($i = 0; $i -lt 8; $i++) {
         $char = $spinner[$i % $spinner.Length]
         Write-Host -NoNewline "`r  [$char] $Title..." -ForegroundColor Cyan
@@ -252,7 +252,7 @@ function Execute-Step {
         $extraInfo = " (Hata)"
     }
 
-    Write-Host "`r  [✓] " -NoNewline -ForegroundColor Green
+    Write-Host "`r  [OK] " -NoNewline -ForegroundColor Green
     Write-Host "$Title" -NoNewline -ForegroundColor White
     if ($extraInfo) {
         Write-Host $extraInfo -ForegroundColor DarkGray
@@ -344,7 +344,7 @@ if ($ramBefore -and $ramAfter) {
 
 if (-not $Silent) {
     Write-Host ""
-    Write-Host "  📊 Sonuç:" -ForegroundColor White
+    Write-Host "  [*] Sonuç:" -ForegroundColor White
     if ($ramAfter) {
         $barAfter = Format-RAMBar -Percent $ramAfter.Percent
         Write-Host "  Sonra : " -NoNewline -ForegroundColor Gray
@@ -352,15 +352,15 @@ if (-not $Silent) {
         Write-Host "  ($($ramAfter.UsedGB) GB / $($ramAfter.TotalGB) GB)" -ForegroundColor Gray
     }
     Write-Host ""
-    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
+    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
     if ($freedGB -gt 0) {
-        Write-Host "  ✨ +$freedGB GB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
+        Write-Host "  [+] +$freedGB GB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
     } elseif ($freedMB -gt 0) {
-        Write-Host "  ✨ +$freedMB MB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
+        Write-Host "  [+] +$freedMB MB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
     } else {
-        Write-Host "  ✨ Tüm Önbellek Boşaltıldı  |  Sistem Optimum Seviyede" -ForegroundColor Green
+        Write-Host "  [+] Tüm Önbellek Boşaltıldı  |  Sistem Optimum Seviyede" -ForegroundColor Green
     }
-    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
+    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -369,7 +369,7 @@ try {
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
     $notify = New-Object System.Windows.Forms.NotifyIcon
     $notify.Icon = [System.Drawing.SystemIcons]::Information
-    $notify.BalloonTipTitle = "RAMCleaner ⚡"
+    $notify.BalloonTipTitle = "RAMCleaner"
     if ($freedGB -gt 0) {
         $notify.BalloonTipText = "Sistem optimize edildi! +$freedGB GB RAM serbest bırakıldı."
     } elseif ($freedMB -gt 0) {
