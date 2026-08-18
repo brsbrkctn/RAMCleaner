@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$Silent
 )
 
@@ -289,7 +289,7 @@ Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
         if ($winFiles) {
             $tempBytes += ($winFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
             $tempCleaned += $winFiles.Count
-            $winFiles | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+            $winFiles | Remove-Item -Force -ErrorAction SilentlyContinue
         }
     }
 
