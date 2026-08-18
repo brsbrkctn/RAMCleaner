@@ -1,8 +1,8 @@
-﻿param(
+param(
     [switch]$Silent
 )
 
-# RAM and System Optimizer v1.2.0
+# RAM and System Optimizer v1.3.0
 # Developed by Barış Berke Çetin
 
 # ============================================================
@@ -55,7 +55,7 @@ if (-not $Silent) {
         [ConsoleFontManager]::SetBalancedFont()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.2.0"
+    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.3.0"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -78,7 +78,7 @@ if (-not $Silent) {
     Write-Host "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝     ╚═════╝ ╚══════╝╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝ ╚══════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
-    Write-Host "                                   v1.2.0" -ForegroundColor DarkGray
+    Write-Host "                                   v1.3.0" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  [i] Barış Berke Çetin 2026  |  github.com/brsbrkctn" -ForegroundColor DarkGray
     Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray

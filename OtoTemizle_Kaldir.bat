@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.2.0 - Otomatik Zamanlayıcı Kaldırma
+echo     RAMCleaner v1.3.0 - Otomatik Zamanlayıcı Kaldırma
 echo   ==============================================================
 echo.
 

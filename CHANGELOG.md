@@ -5,20 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-08-18
+## [1.3.0] - 2026-08-18
 
 ### Added
-- **Visual ASCII RAM Usage Bar**: Interactive before/after graphical memory capacity bars (`[████████░░░░] %40`).
-- **Top 5 Memory Consumers Table**: Real-time process memory consumption list showing top 5 RAM-heavy processes before optimization.
-- **Process Working Set Trim (`EmptyWorkingSet`)**: Native Win32 API (`psapi.dll`) integration to aggressively reclaim unused working set memory from background applications.
+- **Visual ASCII RAM Usage Bar**: Interactive before/after graphical memory capacity bars (`[######--------------] %30`).
+- **Process Working Set Trim (`EmptyWorkingSet`)**: Native Win32 API (`psapi.dll`) integration to reclaim unused working set memory from background applications.
 - **Windows Desktop Toast Notification**: Native zero-dependency balloon/toast notification displaying freed RAM metrics upon completion.
 - **Silent Mode (`--silent`)**: Headless execution mode for background optimizations.
 - **Auto-Cleaner Scheduler Scripts**: `OtoTemizle_Kur.bat` and `OtoTemizle_Kaldir.bat` for one-click Windows Task Scheduler integration.
 - **Thumbnail Cache Cleanup**: Purges Windows Explorer thumbnail database (`thumbcache_*.db`) without affecting user files.
 
 ### Fixed
-- Improved progress bar execution speed with per-step millisecond diagnostics.
-- Enhanced temp file counter and byte calculation precision.
+- Fixed ASCII art spelling to `RAM CLEANER`.
+- Replaced unrendered Unicode emojis with 100% compatible console indicators (`[OK]`, `[*]`, `[+]`, `[i]`) eliminating question mark boxes (`[?]`).
+- Initialized black console theme (`color 0F`) preventing initial blue screen flash during elevation.
+- Single-step direct elevation in `RAM_Temizle.bat` eliminating duplicate CMD windows.
 
 ## [1.1.0] - 2026-08-18
 

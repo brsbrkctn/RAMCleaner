@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.2.0 - Otomatik Zamanlayıcı Kurulumu
+echo     RAMCleaner v1.3.0 - Otomatik Zamanlayıcı Kurulumu
 echo   ==============================================================
 echo.
 echo   Bu islem, her kullanici girisinde ve her 2 saatte bir RAMCleaner'in
