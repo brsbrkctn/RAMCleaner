@@ -53,7 +53,7 @@ if (-not $Silent) {
         [ConsoleFontManager]::SetBalancedFont()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.2.0"
+    $Host.UI.RawUI.WindowTitle = "RAMCleaner v1.2.0"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -64,104 +64,7 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 2: Header & ASCII Art Banner
-# ============================================================
-if (-not $Silent) {
-    Write-Host ""
-    Write-Host "  ██████╗  █████╗ ███╗   ███╗     ██████╗██╗     ███████╗██████╗ ███╗   ██╗███████╗██████╗ " -ForegroundColor Cyan
-    Write-Host "  ██╔══██╗██╔══██╗████╗ ████║    ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║██╔════╝██╔══██╗" -ForegroundColor Cyan
-    Write-Host "  ██████╔╝███████║██╔████╔██║    ██║     ██║     █████╗  ██████╔╝██╔██╗ ██║█████╗  ██████╔╝" -ForegroundColor Cyan
-    Write-Host "  ██╔══██╗██╔══██╗██║╚██╔╝██║    ██║     ██║     ██╔══╝  ██╔══██╗██║╚██╗██║██╔══╝  ██╔══██╗" -ForegroundColor Cyan
-    Write-Host "  ██║  ██║██║  ██║██║ ╚═╝ ██║    ╚██████╗███████╗███████╗██║  ██║██║ ╚████║███████╗██║  ██║" -ForegroundColor Cyan
-    Write-Host "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
-    Write-Host "                                   v1.2.0" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  👤 Barış Berke Çetin 2026  |  🌐 github.com/brsbrkctn" -ForegroundColor DarkGray
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-    Write-Host ""
-    Write-Host "  📋 Yapılacak İşlemler Listesi:" -ForegroundColor White
-    Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-    Write-Host "   1. 🌐 DNS Ağ Önbelleği Temizliği         (ipconfig /flushdns)" -ForegroundColor Gray
-    Write-Host "   2. 🗑️  Geçici Dosyalar & Thumbnail Cache   (User + Windows Temp + Explorer)" -ForegroundColor Gray
-    Write-Host "   3. 📋 Pano (Clipboard) Hafızası Boşaltma" -ForegroundColor Gray
-    Write-Host "   4. ⚡ Arka Plan Uygulamaları Bellek Trim (psapi.dll EmptyWorkingSet)" -ForegroundColor Gray
-    Write-Host "   5. 🧹 RAM Standby List & Önbellek Purge   (ntdll.dll NtSetSystemInformation)" -ForegroundColor Gray
-    Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-    Write-Host ""
-}
-
-# ============================================================
-# BÖLÜM 3: RAM Bilgisi & Görsel RAM Barı Fonksiyonları
-# ============================================================
-function Get-RAMInfo {
-    try {
-        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-        $totalMB = [Math]::Round($os.TotalVisibleMemorySize / 1024)
-        $freeMB = [Math]::Round($os.FreePhysicalMemory / 1024)
-        $usedMB = $totalMB - $freeMB
-        $percent = [Math]::Round(($usedMB / $totalMB) * 100)
-        return @{ Total = $totalMB; Used = $usedMB; Free = $freeMB; Percent = $percent }
-    } catch {
-        return $null
-    }
-}
-
-function Format-RAMBar {
-    param([int]$Percent, [int]$Length = 22)
-    $filledCount = [Math]::Round(($Percent / 100) * $Length)
-    if ($filledCount -gt $Length) { $filledCount = $Length }
-    if ($filledCount -lt 0) { $filledCount = 0 }
-    $emptyCount = $Length - $filledCount
-    $bar = ("█" * $filledCount) + ("░" * $emptyCount)
-    return "[$bar] $Percent%"
-}
-
-function Get-TopProcesses {
-    try {
-        $top = Get-Process -ErrorAction SilentlyContinue | 
-               Where-Object { $_.WorkingSet64 -gt 15MB -and $_.ProcessName -ne "Idle" -and $_.ProcessName -ne "System" } |
-               Group-Object -Property ProcessName |
-               Select-Object @{Name="Name"; Expression={$_.Name}}, @{Name="MemoryMB"; Expression={[Math]::Round((($_.Group | Measure-Object -Property WorkingSet64 -Sum).Sum / 1MB))}} |
-               Sort-Object -Property MemoryMB -Descending |
-               Select-Object -First 5
-        return $top
-    } catch {
-        return @()
-    }
-}
-
-$ramBefore = Get-RAMInfo
-
-if (-not $Silent) {
-    if ($ramBefore) {
-        $barText = Format-RAMBar -Percent $ramBefore.Percent
-        Write-Host "  📊 RAM Durumu (ÖNCE):" -ForegroundColor Yellow
-        Write-Host "     $barText  |  Kullanılan: $($ramBefore.Used) MB / Toplam: $($ramBefore.Total) MB (Boş: $($ramBefore.Free) MB)" -ForegroundColor Gray
-        Write-Host ""
-    }
-
-    # En Çok RAM Tüketen İlk 5 Uygulama Tablosu
-    $topProcs = Get-TopProcesses
-    if ($topProcs -and $topProcs.Count -gt 0) {
-        Write-Host "  🔥 En Çok Bellek Tüketen İşlemler (Top 5):" -ForegroundColor Magenta
-        $rank = 1
-        foreach ($proc in $topProcs) {
-            $pName = $proc.Name.PadRight(24)
-            $pMem = "$($proc.MemoryMB) MB".PadLeft(10)
-            Write-Host "     $rank. $pName : $pMem" -ForegroundColor DarkGray
-            $rank++
-        }
-        Write-Host ""
-    }
-
-    Write-Host "  [*] İşlemler Başlatılıyor..." -ForegroundColor DarkCyan
-    Write-Host ""
-}
-
-# ============================================================
-# BÖLÜM 4: Win32 Memory & Process Cleaner API
+# BÖLÜM 2: Win32 Memory & Process Cleaner API
 # ============================================================
 $sourceCleaner = @"
 using System;
@@ -169,7 +72,6 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 
 public class MemoryCleaner {
-    // NTDLL API for Standby & Modified List Purge
     [DllImport("ntdll.dll")]
     public static extern uint NtSetSystemInformation(int SystemInformationClass, ref int SystemInformation, int SystemInformationLength);
 
@@ -189,7 +91,6 @@ public class MemoryCleaner {
     [DllImport("advapi32.dll", SetLastError = true)]
     public static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, int BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
 
-    // PSAPI & KERNEL32 API for EmptyWorkingSet
     [DllImport("psapi.dll", SetLastError = true)]
     public static extern bool EmptyWorkingSet(IntPtr hProcess);
 
@@ -217,7 +118,7 @@ public class MemoryCleaner {
         Process[] processes = Process.GetProcesses();
         foreach (Process p in processes) {
             try {
-                if (p.Id == 0 || p.Id == 4) continue; // Skip System and Idle
+                if (p.Id == 0 || p.Id == 4) continue;
                 IntPtr hProcess = OpenProcess(0x001F0FFF, false, p.Id);
                 if (hProcess != IntPtr.Zero) {
                     if (EmptyWorkingSet(hProcess)) {
@@ -235,13 +136,13 @@ public class MemoryCleaner {
         EnablePrivilege("SeIncreaseQuotaPrivilege");
         
         uint result = 0;
-        int command = 2; // Flush Modified Page List
+        int command = 2;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        command = 3; // Purge Standby List
+        command = 3;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        command = 4; // Purge Low Priority Standby List
+        command = 4;
         result |= NtSetSystemInformation(80, ref command, 4);
 
         return result;
@@ -254,75 +155,113 @@ try {
 } catch {}
 
 # ============================================================
-# BÖLÜM 5: Progress Bar Fonksiyonu
+# BÖLÜM 3: RAM Bilgisi & Görsel Formatlama
 # ============================================================
-function Run-StepWithProgress {
+function Get-RAMInfo {
+    try {
+        $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+        $totalMB = [Math]::Round($os.TotalVisibleMemorySize / 1024)
+        $freeMB = [Math]::Round($os.FreePhysicalMemory / 1024)
+        $usedMB = $totalMB - $freeMB
+        $percent = [Math]::Round(($usedMB / $totalMB) * 100)
+        $totalGB = [Math]::Round($totalMB / 1024, 1)
+        $usedGB = [Math]::Round($usedMB / 1024, 1)
+        $freeGB = [Math]::Round($freeMB / 1024, 1)
+        return @{ 
+            TotalMB = $totalMB; UsedMB = $usedMB; FreeMB = $freeMB; Percent = $percent
+            TotalGB = $totalGB; UsedGB = $usedGB; FreeGB = $freeGB
+        }
+    } catch {
+        return $null
+    }
+}
+
+function Format-RAMBar {
+    param([int]$Percent, [int]$Length = 20)
+    $filledCount = [Math]::Round(($Percent / 100) * $Length)
+    if ($filledCount -gt $Length) { $filledCount = $Length }
+    if ($filledCount -lt 0) { $filledCount = 0 }
+    $emptyCount = $Length - $filledCount
+    $bar = ("█" * $filledCount) + ("░" * $emptyCount)
+    $pctStr = "$Percent%".PadLeft(4)
+    return "[$bar] $pctStr"
+}
+
+# ============================================================
+# BÖLÜM 4: Şık Konsol Arayüzü Başlangıcı
+# ============================================================
+if (-not $Silent) {
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────────────┐" -ForegroundColor DarkCyan
+    Write-Host "  │   ⚡ RAM CLEANER v1.2.0                 Barış Berke Çetin   │" -ForegroundColor Cyan
+    Write-Host "  └─────────────────────────────────────────────────────────────┘" -ForegroundColor DarkCyan
+    Write-Host ""
+}
+
+$ramBefore = Get-RAMInfo
+
+if (-not $Silent -and $ramBefore) {
+    $barBefore = Format-RAMBar -Percent $ramBefore.Percent
+    Write-Host "  📊 RAM Durumu:" -ForegroundColor White
+    Write-Host "  Önce  : " -NoNewline -ForegroundColor Gray
+    Write-Host $barBefore -NoNewline -ForegroundColor Yellow
+    Write-Host "  ($($ramBefore.UsedGB) GB / $($ramBefore.TotalGB) GB)" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "  ⚡ Optimizasyon İşlemleri:" -ForegroundColor White
+}
+
+# ============================================================
+# BÖLÜM 5: Temizlik Adımları
+# ============================================================
+function Execute-Step {
     param(
-        [string]$StepNumber,
         [string]$Title,
         [scriptblock]$Action
     )
 
     if ($Silent) {
         try { & $Action } catch {}
-        return $true
+        return
     }
 
-    $barLength = 20
-    for ($i = 1; $i -le $barLength; $i++) {
-        $percent = [math]::Round(($i / $barLength) * 100)
-        $filled = "=" * $i
-        $unfilled = " " * ($barLength - $i)
-        $msg = "`r  [*] " + $StepNumber + ". " + $Title + " [" + $filled + $unfilled + "] " + $percent + "%"
-        Write-Host -NoNewline $msg -ForegroundColor Cyan
-        Start-Sleep -Milliseconds 25
+    $spinner = @('⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏')
+    for ($i = 0; $i -lt 8; $i++) {
+        $char = $spinner[$i % $spinner.Length]
+        Write-Host -NoNewline "`r  [$char] $Title..." -ForegroundColor Cyan
+        Start-Sleep -Milliseconds 30
     }
 
-    $resultData = $null
-    $errMsg = $null
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $extraInfo = ""
     try {
-        $resultData = & $Action
-    } catch {
-        $errMsg = $_.Exception.Message
-    }
-    $sw.Stop()
-
-    $completedBar = "=" * $barLength
-    if ($errMsg) {
-        $doneMsg = "`r  [!] " + $StepNumber + ". " + $Title + " [" + $completedBar + "] 100% - HATA: " + $errMsg
-        Write-Host $doneMsg -ForegroundColor Red
-        return $false
-    } else {
-        $detailInfo = ""
-        if ($resultData -and $resultData.Detail) {
-            $detailInfo = " (" + $resultData.Detail + " - " + $sw.ElapsedMilliseconds + "ms)"
-        } else {
-            $detailInfo = " (" + $sw.ElapsedMilliseconds + "ms)"
+        $res = & $Action
+        if ($res -and $res.Detail) {
+            $extraInfo = "  " + $res.Detail
         }
-        $doneMsg = "`r  [OK] " + $StepNumber + ". " + $Title + " [" + $completedBar + "] 100% - TAMAMLANDI" + $detailInfo
-        Write-Host $doneMsg -ForegroundColor Green
-        return $true
+    } catch {
+        $extraInfo = " (Hata)"
     }
-    Start-Sleep -Milliseconds 50
+
+    Write-Host "`r  [✓] " -NoNewline -ForegroundColor Green
+    Write-Host "$Title" -NoNewline -ForegroundColor White
+    if ($extraInfo) {
+        Write-Host $extraInfo -ForegroundColor DarkGray
+    } else {
+        Write-Host ""
+    }
+    Start-Sleep -Milliseconds 40
 }
 
-# ============================================================
-# BÖLÜM 6: Temizlik İşlemleri
-# ============================================================
-
-# --- Adım 1: DNS Flush ---
-$res1 = Run-StepWithProgress -StepNumber "1" -Title "DNS Ağ Önbelleği Temizliği         " -Action {
+# 1. DNS Flush
+Execute-Step -Title "DNS Ağ Önbelleği Temizliği" -Action {
     ipconfig /flushdns *>$null
-    return @{ Detail = "DNS Önbelleği Sıfırlandı" }
+    return @{ Detail = "(Sıfırlandı)" }
 }
 
-# --- Adım 2: Temp Dosyaları & Thumbnail Cache Temizliği ---
-$res2 = Run-StepWithProgress -StepNumber "2" -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
+# 2. Temp & Thumbnail Cache
+Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache" -Action {
     $tempCleaned = 0
     $tempBytes = 0
 
-    # User Temp
     $userTemp = [System.IO.Path]::GetTempPath()
     if (Test-Path $userTemp) {
         $files = Get-ChildItem $userTemp -Recurse -ErrorAction SilentlyContinue
@@ -333,7 +272,6 @@ $res2 = Run-StepWithProgress -StepNumber "2" -Title "Geçici Dosyalar & Thumbnai
         }
     }
 
-    # Windows Temp
     $winTemp = "$env:SystemRoot\Temp"
     if (Test-Path $winTemp) {
         $winFiles = Get-ChildItem $winTemp -Recurse -ErrorAction SilentlyContinue
@@ -344,7 +282,6 @@ $res2 = Run-StepWithProgress -StepNumber "2" -Title "Geçici Dosyalar & Thumbnai
         }
     }
 
-    # Thumbnail Cache
     $thumbPath = "$env:LOCALAPPDATA\Microsoft\Windows\Explorer"
     if (Test-Path $thumbPath) {
         $thumbFiles = Get-ChildItem $thumbPath -Filter "thumbcache_*.db" -ErrorAction SilentlyContinue
@@ -355,80 +292,87 @@ $res2 = Run-StepWithProgress -StepNumber "2" -Title "Geçici Dosyalar & Thumbnai
         }
     }
 
-    $freedMB = [Math]::Round($tempBytes / 1MB, 1)
-    return @{ Detail = "$tempCleaned dosya temizlendi ($freedMB MB)" }
+    $freedDiskMB = [Math]::Round($tempBytes / 1MB, 1)
+    if ($freedDiskMB -gt 0) {
+        return @{ Detail = "(+$freedDiskMB MB Disk Alanı)" }
+    } else {
+        return @{ Detail = "(Temiz)" }
+    }
 }
 
-# --- Adım 3: Clipboard Temizliği ---
-$res3 = Run-StepWithProgress -StepNumber "3" -Title "Pano (Clipboard) Hafızası           " -Action {
+# 3. Clipboard Flush
+Execute-Step -Title "Pano (Clipboard) Hafızası" -Action {
     try {
         cmd /c "echo off | clip" *>$null
     } catch {}
-    return @{ Detail = "Pano Boşaltıldı" }
+    return @{ Detail = "(Boşaltıldı)" }
 }
 
-# --- Adım 4: Arka Plan Uygulamaları Working Set Trim ---
-$res4 = Run-StepWithProgress -StepNumber "4" -Title "Arka Plan Uygulama Bellek Trim       " -Action {
+# 4. Working Set Trim
+Execute-Step -Title "Arka Plan Uygulama Bellek Trim" -Action {
     $count = [MemoryCleaner]::TrimAllProcessesWorkingSet()
-    return @{ Detail = "$count işlem sıkıştırıldı" }
+    return @{ Detail = "($count işlem optimize edildi)" }
 }
 
-# --- Adım 5: RAM Standby List & Önbellek Purge ---
-$res5 = Run-StepWithProgress -StepNumber "5" -Title "RAM Standby List & Önbellek Purge   " -Action {
+# 5. Standby List Purge
+Execute-Step -Title "RAM Standby List & Önbellek Purge" -Action {
     [MemoryCleaner]::ClearStandbyMemory() | Out-Null
-    return @{ Detail = "Standby & Modified List Purge" }
+    return @{ Detail = "(Tamamlandı)" }
 }
 
 # ============================================================
-# BÖLÜM 7: RAM Kullanım Bilgisi - SONRASI & ÖZET
+# BÖLÜM 6: Sonuç Raporu & Kapanış
 # ============================================================
 $ramAfter = Get-RAMInfo
 $freedMB = 0
+$freedGB = 0
 if ($ramBefore -and $ramAfter) {
-    $freedMB = $ramAfter.Free - $ramBefore.Free
+    $freedMB = $ramAfter.FreeMB - $ramBefore.FreeMB
+    $freedGB = [Math]::Round($freedMB / 1024, 1)
 }
 
 if (-not $Silent) {
     Write-Host ""
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
-
-    if ($ramBefore -and $ramAfter) {
-        $barTextAfter = Format-RAMBar -Percent $ramAfter.Percent
-        Write-Host "  📊 RAM Durumu (SONRA):" -ForegroundColor Yellow
-        Write-Host "     $barTextAfter  |  Kullanılan: $($ramAfter.Used) MB / Toplam: $($ramAfter.Total) MB (Boş: $($ramAfter.Free) MB)" -ForegroundColor Gray
-        if ($freedMB -gt 0) {
-            Write-Host "     ✨ Serbest bırakılan alan: +$freedMB MB RAM" -ForegroundColor Green
-        } else {
-            Write-Host "     ℹ️  RAM Standby listesi ve işlemler başarıyla optimize edildi." -ForegroundColor DarkCyan
-        }
-        Write-Host ""
+    Write-Host "  📊 Sonuç:" -ForegroundColor White
+    if ($ramAfter) {
+        $barAfter = Format-RAMBar -Percent $ramAfter.Percent
+        Write-Host "  Sonra : " -NoNewline -ForegroundColor Gray
+        Write-Host $barAfter -NoNewline -ForegroundColor Green
+        Write-Host "  ($($ramAfter.UsedGB) GB / $($ramAfter.TotalGB) GB)" -ForegroundColor Gray
     }
-
-    Write-Host "  [OK] TÜM İŞLEMLER BAŞARIYLA TAMAMLANDI!" -ForegroundColor Green
-    Write-Host "  [*] Sistem yüksek performans ve verimliliğe hazır." -ForegroundColor Yellow
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    if ($freedGB -gt 0) {
+        Write-Host "  ✨ +$freedGB GB RAM Serbest Bırakıldı  |  Sistem Hazır" -ForegroundColor Green
+    } elseif ($freedMB -gt 0) {
+        Write-Host "  ✨ +$freedMB MB RAM Serbest Bırakıldı  |  Sistem Hazır" -ForegroundColor Green
+    } else {
+        Write-Host "  ✨ Tüm Önbellek Boşaltıldı  |  Sistem Optimum Seviyede" -ForegroundColor Green
+    }
+    Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
     Write-Host ""
 }
 
-# ============================================================
-# BÖLÜM 8: Windows Masaüstü Bildirimi (Toast / Balloon)
-# ============================================================
+# Windows Masaüstü Bildirimi (Toast/Balloon)
 try {
     Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
     $notify = New-Object System.Windows.Forms.NotifyIcon
     $notify.Icon = [System.Drawing.SystemIcons]::Information
-    $notify.BalloonTipTitle = "RAMCleaner v1.2.0 ⚡"
-    if ($freedMB -gt 0) {
+    $notify.BalloonTipTitle = "RAMCleaner ⚡"
+    if ($freedGB -gt 0) {
+        $notify.BalloonTipText = "Sistem optimize edildi! +$freedGB GB RAM serbest bırakıldı."
+    } elseif ($freedMB -gt 0) {
         $notify.BalloonTipText = "Sistem optimize edildi! +$freedMB MB RAM serbest bırakıldı."
     } else {
         $notify.BalloonTipText = "Tüm işlemler tamamlandı. Sistem optimum performansta!"
     }
     $notify.Visible = $true
     $notify.ShowBalloonTip(3000)
-    Start-Sleep -Milliseconds 500
+    Start-Sleep -Milliseconds 400
     $notify.Dispose()
 } catch {}
 
 if (-not $Silent) {
-    Start-Sleep -Seconds 2
+    Write-Host "  Pencere 3 saniye sonra otomatik kapanacak..." -ForegroundColor DarkGray
+    Start-Sleep -Seconds 3
 }
