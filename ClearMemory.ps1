@@ -6,7 +6,7 @@
 # Developed by Barış Berke Çetin
 
 # ============================================================
-# BÖLÜM 1: Console Font & Window Manager (Win32 API)
+# BÖLÜM 1: Console Background, Font & Window Manager
 # ============================================================
 $sourceFont = @"
 using System;
@@ -49,11 +49,13 @@ public class ConsoleFontManager {
 
 if (-not $Silent) {
     try {
+        $Host.UI.RawUI.BackgroundColor = "Black"
+        $Host.UI.RawUI.ForegroundColor = "White"
         Add-Type -TypeDefinition $sourceFont -ErrorAction Stop
         [ConsoleFontManager]::SetBalancedFont()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAMCleaner v1.2.0"
+    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.2.0"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -64,7 +66,27 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 2: Win32 Memory & Process Cleaner API
+# BÖLÜM 2: ASCII Art Banner & Başlık
+# ============================================================
+if (-not $Silent) {
+    Write-Host ""
+    Write-Host "  ██████╗  █████╗ ███╗   ███╗     ██████╗██╗     ███████╗██████╗ ███╗   ██╗███████╗██████╗ " -ForegroundColor Cyan
+    Write-Host "  ██╔══██╗██╔══██╗████╗ ████║    ██╔════╝██║     ██╔════╝██╔══██╗████╗  ██║██╔════╝██╔══██╗" -ForegroundColor Cyan
+    Write-Host "  ██████╔╝███████║██╔████╔██║    ██║     ██║     █████╗  ██████╔╝██╔██╗ ██║█████╗  ██████╔╝" -ForegroundColor Cyan
+    Write-Host "  ██╔══██╗██╔══██╗██║╚██╔╝██║    ██║     ██║     ██╔══╝  ██╔══██╗██║╚██╗██║██╔══╝  ██╔══██╗" -ForegroundColor Cyan
+    Write-Host "  ██║  ██║██║  ██║██║ ╚═╝ ██║    ╚██████╗███████╗███████╗██║  ██║██║ ╚████║███████╗██║  ██║" -ForegroundColor Cyan
+    Write-Host "  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
+    Write-Host "                                   v1.2.0" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  👤 Barış Berke Çetin 2026  |  🌐 github.com/brsbrkctn" -ForegroundColor DarkGray
+    Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+# ============================================================
+# BÖLÜM 3: Win32 Memory & Process Cleaner API
 # ============================================================
 $sourceCleaner = @"
 using System;
@@ -155,7 +177,7 @@ try {
 } catch {}
 
 # ============================================================
-# BÖLÜM 3: RAM Bilgisi & Görsel Formatlama
+# BÖLÜM 4: RAM Bilgisi & Görsel Formatlama
 # ============================================================
 function Get-RAMInfo {
     try {
@@ -185,17 +207,6 @@ function Format-RAMBar {
     $bar = ("█" * $filledCount) + ("░" * $emptyCount)
     $pctStr = "$Percent%".PadLeft(4)
     return "[$bar] $pctStr"
-}
-
-# ============================================================
-# BÖLÜM 4: Şık Konsol Arayüzü Başlangıcı
-# ============================================================
-if (-not $Silent) {
-    Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────────────┐" -ForegroundColor DarkCyan
-    Write-Host "  │   ⚡ RAM CLEANER v1.2.0                 Barış Berke Çetin   │" -ForegroundColor Cyan
-    Write-Host "  └─────────────────────────────────────────────────────────────┘" -ForegroundColor DarkCyan
-    Write-Host ""
 }
 
 $ramBefore = Get-RAMInfo
@@ -252,13 +263,13 @@ function Execute-Step {
 }
 
 # 1. DNS Flush
-Execute-Step -Title "DNS Ağ Önbelleği Temizliği" -Action {
+Execute-Step -Title "DNS Ağ Önbelleği Temizliği         " -Action {
     ipconfig /flushdns *>$null
     return @{ Detail = "(Sıfırlandı)" }
 }
 
 # 2. Temp & Thumbnail Cache
-Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache" -Action {
+Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
     $tempCleaned = 0
     $tempBytes = 0
 
@@ -301,7 +312,7 @@ Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache" -Action {
 }
 
 # 3. Clipboard Flush
-Execute-Step -Title "Pano (Clipboard) Hafızası" -Action {
+Execute-Step -Title "Pano (Clipboard) Hafızası           " -Action {
     try {
         cmd /c "echo off | clip" *>$null
     } catch {}
@@ -309,13 +320,13 @@ Execute-Step -Title "Pano (Clipboard) Hafızası" -Action {
 }
 
 # 4. Working Set Trim
-Execute-Step -Title "Arka Plan Uygulama Bellek Trim" -Action {
+Execute-Step -Title "Arka Plan Uygulama Bellek Trim       " -Action {
     $count = [MemoryCleaner]::TrimAllProcessesWorkingSet()
     return @{ Detail = "($count işlem optimize edildi)" }
 }
 
 # 5. Standby List Purge
-Execute-Step -Title "RAM Standby List & Önbellek Purge" -Action {
+Execute-Step -Title "RAM Standby List & Önbellek Purge   " -Action {
     [MemoryCleaner]::ClearStandbyMemory() | Out-Null
     return @{ Detail = "(Tamamlandı)" }
 }
@@ -341,15 +352,15 @@ if (-not $Silent) {
         Write-Host "  ($($ramAfter.UsedGB) GB / $($ramAfter.TotalGB) GB)" -ForegroundColor Gray
     }
     Write-Host ""
-    Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
     if ($freedGB -gt 0) {
-        Write-Host "  ✨ +$freedGB GB RAM Serbest Bırakıldı  |  Sistem Hazır" -ForegroundColor Green
+        Write-Host "  ✨ +$freedGB GB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
     } elseif ($freedMB -gt 0) {
-        Write-Host "  ✨ +$freedMB MB RAM Serbest Bırakıldı  |  Sistem Hazır" -ForegroundColor Green
+        Write-Host "  ✨ +$freedMB MB RAM Serbest Bırakıldı  |  Sistem Yüksek Performansa Hazır" -ForegroundColor Green
     } else {
         Write-Host "  ✨ Tüm Önbellek Boşaltıldı  |  Sistem Optimum Seviyede" -ForegroundColor Green
     }
-    Write-Host "  ─────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  ═════════════════════════════════════════════════════════════════════════════════════════" -ForegroundColor DarkGray
     Write-Host ""
 }
 
