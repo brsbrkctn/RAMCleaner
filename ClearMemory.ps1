@@ -2,6 +2,9 @@
     [switch]$Silent
 )
 
+$ConfirmPreference = 'None'
+$ErrorActionPreference = 'SilentlyContinue'
+
 # RAM and System Optimizer v1.3.0
 # Developed by Barış Berke Çetin
 
@@ -275,31 +278,31 @@ Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
 
     $userTemp = [System.IO.Path]::GetTempPath()
     if (Test-Path $userTemp) {
-        $files = Get-ChildItem $userTemp -Recurse -ErrorAction SilentlyContinue
+        $files = Get-ChildItem $userTemp -Recurse -Force -ErrorAction SilentlyContinue
         if ($files) {
             $tempBytes += ($files | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
             $tempCleaned += $files.Count
-            $files | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+            $files | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
         }
     }
 
     $winTemp = "$env:SystemRoot\Temp"
     if (Test-Path $winTemp) {
-        $winFiles = Get-ChildItem $winTemp -Recurse -ErrorAction SilentlyContinue
+        $winFiles = Get-ChildItem $winTemp -Recurse -Force -ErrorAction SilentlyContinue
         if ($winFiles) {
             $tempBytes += ($winFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
             $tempCleaned += $winFiles.Count
-            $winFiles | Remove-Item -Force -ErrorAction SilentlyContinue
+            $winFiles | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
         }
     }
 
     $thumbPath = "$env:LOCALAPPDATA\Microsoft\Windows\Explorer"
     if (Test-Path $thumbPath) {
-        $thumbFiles = Get-ChildItem $thumbPath -Filter "thumbcache_*.db" -ErrorAction SilentlyContinue
+        $thumbFiles = Get-ChildItem $thumbPath -Filter "thumbcache_*.db" -Force -ErrorAction SilentlyContinue
         if ($thumbFiles) {
             $tempBytes += ($thumbFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
             $tempCleaned += $thumbFiles.Count
-            $thumbFiles | Remove-Item -Force -ErrorAction SilentlyContinue
+            $thumbFiles | Remove-Item -Force -Confirm:$false -ErrorAction SilentlyContinue
         }
     }
 
