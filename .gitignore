@@ -1,0 +1,7 @@
+# Windows temporary files
+Thumbs.db
+Desktop.ini
+
+# Logs and scratch files
+*.log
+*.tmp
