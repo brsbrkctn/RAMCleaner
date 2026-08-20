@@ -5,3 +5,6 @@ Desktop.ini
 # Logs and scratch files
 *.log
 *.tmp
+
+# Third-party / IDE tool directories
+.freebuff/
