@@ -1,27 +1,30 @@
 @echo off
+setlocal EnableDelayedExpansion
 color 0F
-chcp 65001 >nul 2>&1
 
-set "SILENT="
-if /i "%~1"=="--silent" set "SILENT=-Silent"
-if /i "%~2"=="--silent" set "SILENT=-Silent"
+set SILENT=
+if /i %~1==--silent set SILENT=-Silent
+if /i %~2==--silent set SILENT=-Silent
 
-:: Check for Administrator privileges
+if /i %~1==--elevated goto :run_direct
+if /i %~2==--elevated goto :run_direct
+
 net session >nul 2>&1
-if %errorlevel% equ 0 (
-    if defined SILENT (
-        powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0ClearMemory.ps1" -Silent
-        exit /b
-    )
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0ClearMemory.ps1"
-    exit /b
-)
+if %errorlevel% equ 0 goto :run_direct
 
-:: Request elevation directly with black background
 if defined SILENT (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c color 0F && powershell -NoProfile -ExecutionPolicy Bypass -File \"%~dp0ClearMemory.ps1\" -Silent' -Verb RunAs -WindowStyle Hidden"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command Start-Process powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ''%~dp0ClearMemory.ps1'' -Silent' -Verb RunAs -WindowStyle Hidden
     exit /b
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c color 0F && powershell -NoProfile -ExecutionPolicy Bypass -File \"%~dp0ClearMemory.ps1\"' -Verb RunAs"
+powershell -NoProfile -ExecutionPolicy Bypass -Command Start-Process -FilePath '%~f0' -ArgumentList '--elevated' -Verb RunAs
+exit /b
+
+:run_direct
+cd /d %~dp0
+if defined SILENT (
+    powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File %~dp0ClearMemory.ps1 -Silent
+    exit /b
+)
+powershell -NoProfile -ExecutionPolicy Bypass -File %~dp0ClearMemory.ps1
 exit /b

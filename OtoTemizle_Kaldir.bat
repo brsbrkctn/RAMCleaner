@@ -1,21 +1,26 @@
 @echo off
-chcp 65001 >nul 2>&1
-title RAMCleaner - Otomatik Zamanlayıcı Kaldırma
+setlocal EnableDelayedExpansion
+
+title RAMCleaner - Otomatik Zamanlayici Kaldirma
 color 0C
 
-:: UAC Elevation check
+if /i "%~1"=="--elevated" goto :main
+if /i "%~2"=="--elevated" goto :main
+
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo   [!] Yonetici yetkisi gerekli - UAC istegi gonderiliyor...
-    echo   [i] Lutfen acilan UAC penceresinde 'Evet' secenegini onaylayin.
-    echo.
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process '%~f0' -Verb RunAs"
-    exit /b
-)
+if %errorlevel% equ 0 goto :main
+
+echo.
+echo   [!] Yonetici yetkisi gerekli - UAC onay penceresi aciliyor...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList '--elevated' -Verb RunAs"
+exit /b
+
+:main
+cd /d "%~dp0"
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.3.0 - Otomatik Zamanlayıcı Kaldırma
+echo     RAMCleaner v1.3.0 - Otomatik Zamanlayici Kaldirma
 echo   ==============================================================
 echo.
 

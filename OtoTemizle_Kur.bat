@@ -1,31 +1,33 @@
 @echo off
-chcp 65001 >nul 2>&1
-title RAMCleaner - Otomatik Temizleme Zamanlayıcı Kurulumu
+setlocal EnableDelayedExpansion
+
+title RAMCleaner - Otomatik Temizleme Zamanlayici Kurulumu
 color 0A
 
-:: UAC Elevation check
+if /i "%~1"=="--elevated" goto :main
+if /i "%~2"=="--elevated" goto :main
+
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo   [!] Yonetici yetkisi gerekli - UAC istegi gonderiliyor...
-    echo   [i] Lutfen acilan UAC penceresinde 'Evet' secenegini onaylayin.
-    echo.
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process '%~f0' -Verb RunAs"
-    exit /b
-)
+if %errorlevel% equ 0 goto :main
+
+echo.
+echo   [!] Yonetici yetkisi gerekli - UAC onay penceresi aciliyor...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList '--elevated' -Verb RunAs"
+exit /b
+
+:main
+cd /d "%~dp0"
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.3.0 - Otomatik Zamanlayıcı Kurulumu
+echo     RAMCleaner v1.3.0 - Otomatik Zamanlayici Kurulumu
 echo   ==============================================================
 echo.
-echo   Bu islem, her kullanici girisinde ve her 2 saatte bir RAMCleaner'in
-echo   arka planda SESSİZ (bildirimli) olarak calismasini saglar.
+echo   Bu islem, her kullanici girisinde RAMCleaner'in arka planda
+echo   SESSIZ (sifir pencere, masaustu bildirimli) calismasini saglar.
 echo.
 
-set "TARGET_BAT=%~dp0RAM_Temizle.bat"
-
-:: Create scheduled task
-schtasks /create /tn "RAMCleaner_AutoClean" /tr "\"%TARGET_BAT%\" --silent" /sc onlogon /rl highest /f >nul 2>&1
+schtasks /create /tn "RAMCleaner_AutoClean" /tr "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File %~dp0ClearMemory.ps1 -Silent" /sc onlogon /rl highest /f >nul 2>&1
 
 if %errorlevel% equ 0 (
     echo   [OK] Otomatik temizleme gorevi basariyla olusturuldu!
