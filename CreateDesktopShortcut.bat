@@ -1,7 +1,7 @@
 @echo off
 title Create Desktop Shortcut - RAMCleaner
 echo.
-echo   RAMCleaner Masaüstü Kısayol Oluşturucu
+echo   RAMCleaner Masaustu Kisayol Olusturucu
 echo   ────────────────────────────────────────
 echo.
 
@@ -9,4 +9,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObj
 
 echo.
 echo   Bu pencere 3 saniye sonra kapanacak.
-timeout /t 3 >nul
+ping -n 4 127.0.0.1 >nul
