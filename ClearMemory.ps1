@@ -161,12 +161,26 @@ public class MemoryCleaner {
         EnablePrivilege("SeIncreaseQuotaPrivilege");
         
         uint result = 0;
+
+        // 1. Empty system working sets
         int command = 2;
         result |= NtSetSystemInformation(80, ref command, 4);
 
+        // 2. Flush modified list
         command = 3;
         result |= NtSetSystemInformation(80, ref command, 4);
 
+        System.Threading.Thread.Sleep(120);
+
+        // 3. Purge all standby memory lists
+        command = 4;
+        result |= NtSetSystemInformation(80, ref command, 4);
+
+        // 4. Purge low priority standby list
+        command = 5;
+        result |= NtSetSystemInformation(80, ref command, 4);
+
+        // 5. Second pass purge to eliminate all newly transitioned pages
         command = 4;
         result |= NtSetSystemInformation(80, ref command, 4);
 
