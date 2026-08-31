@@ -89,7 +89,7 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 3: Win32 Memory Cleaner API (Standby & Cache Purge)
+# BÖLÜM 3: Win32 Memory Cleaner API (Zero-Disk Standby Purge)
 # ============================================================
 $sourceCleaner = @"
 using System;
@@ -118,13 +118,13 @@ public class MemoryCleaner {
 
     public static bool EnablePrivilege(string privilege) {
         IntPtr token;
-        if (OpenProcessToken(Process.GetCurrentProcess().Handle, 0x0020, out token)) {
+        if (OpenProcessToken(Process.GetCurrentProcess().Handle, 0x0020 | 0x0008, out token)) {
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
             tp.PrivilegeCount = 1;
-            tp.Attributes = 2;
-            LookupPrivilegeValue(null, privilege, out tp.Luid);
-            AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
-            return true;
+            tp.Attributes = 2; // SE_PRIVILEGE_ENABLED
+            if (LookupPrivilegeValue(null, privilege, out tp.Luid)) {
+                return AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+            }
         }
         return false;
     }
@@ -135,20 +135,12 @@ public class MemoryCleaner {
         
         uint result = 0;
 
-        // 1. Flush modified list
-        int command = 3;
+        // Command 4: MemoryPurgeStandbyList (Safely moves cached pages to Free list with 0 disk write)
+        int command = 4;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        // 2. Purge standby list
-        command = 4;
-        result |= NtSetSystemInformation(80, ref command, 4);
-
-        // 3. Purge low priority standby list
+        // Command 5: MemoryPurgeLowPriorityStandbyList
         command = 5;
-        result |= NtSetSystemInformation(80, ref command, 4);
-
-        // 4. Empty system working sets
-        command = 2;
         result |= NtSetSystemInformation(80, ref command, 4);
 
         return result;
@@ -252,8 +244,8 @@ Execute-Step -Title "DNS Ağ Önbelleği Temizliği         " -Action {
     return @{ Detail = "(Sıfırlandı)" }
 }
 
-# 2. Temp & Thumbnail Cache
-Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
+# 2. Temp Dosyaları Temizliği (Hafif ve Güvenli)
+Execute-Step -Title "Geçici Dosyalar Temizliği           " -Action {
     $tempCleaned = 0
     $tempBytes = 0
 
@@ -277,16 +269,6 @@ Execute-Step -Title "Geçici Dosyalar & Thumbnail Cache   " -Action {
         }
     }
 
-    $thumbPath = "$env:LOCALAPPDATA\Microsoft\Windows\Explorer"
-    if (Test-Path $thumbPath) {
-        $thumbFiles = Get-ChildItem $thumbPath -Filter "thumbcache_*.db" -Force -ErrorAction SilentlyContinue
-        if ($thumbFiles) {
-            $tempBytes += ($thumbFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
-            $tempCleaned += $thumbFiles.Count
-            $thumbFiles | Remove-Item -Force -Confirm:$false -ErrorAction SilentlyContinue
-        }
-    }
-
     $freedDiskMB = [Math]::Round($tempBytes / 1MB, 1)
     if ($freedDiskMB -gt 0) {
         return @{ Detail = "(+$freedDiskMB MB Disk Alanı)" }
@@ -303,7 +285,7 @@ Execute-Step -Title "Pano (Clipboard) Hafızası           " -Action {
     return @{ Detail = "(Boşaltıldı)" }
 }
 
-# 4. Standby List & Memory Purge
+# 4. Standby List Purge (Zero Disk IO, Instant Free Memory)
 Execute-Step -Title "RAM Standby List & Önbellek Purge   " -Action {
     [MemoryCleaner]::ClearStandbyMemory() | Out-Null
     return @{ Detail = "(Tamamlandı)" }
