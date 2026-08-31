@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Visual ASCII RAM Usage Bar**: Interactive before/after graphical memory capacity bars (`[######--------------] %30`).
-- **Process Working Set Trim (`EmptyWorkingSet`)**: Native Win32 API (`psapi.dll`) integration to reclaim unused working set memory from background applications.
 - **Windows Desktop Toast Notification**: Native zero-dependency balloon/toast notification displaying freed RAM metrics upon completion.
 - **Silent Mode (`--silent`)**: Headless execution mode for background optimizations.
 - **Auto-Cleaner Scheduler Scripts**: `OtoTemizle_Kur.bat` and `OtoTemizle_Kaldir.bat` for one-click Windows Task Scheduler integration.
 - **Thumbnail Cache Cleanup**: Purges Windows Explorer thumbnail database (`thumbcache_*.db`) without affecting user files.
 
 ### Fixed
+- Restored pure Windows NT kernel Standby and Modified Page purge sequence, completely eliminating mouse stuttering and disk thrashing.
 - Fixed ASCII art spelling to `RAM CLEANER`.
 - Replaced unrendered Unicode emojis with 100% compatible console indicators (`[OK]`, `[*]`, `[+]`, `[i]`) eliminating question mark boxes (`[?]`).
 - Initialized black console theme (`color 0F`) preventing initial blue screen flash during elevation.

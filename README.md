@@ -2,14 +2,13 @@
 
 **RAMCleaner**, Windows 10 ve Windows 11 için geliştirilmiş, harici hiçbir üçüncü parti yazılım veya kütüphaneye ihtiyaç duymayan (**sıfır bağımlılık**), açık kaynaklı bir RAM önbelleği ve sistem performansı optimizasyon aracıdır.
 
-Batch, PowerShell ve doğrudan yerel C# Win32 API (`ntdll.dll` ve `psapi.dll`) çağrıları ile doğrudan Windows bellek yöneticisiyle iletişim kurarak çalışır.
+Batch, PowerShell ve doğrudan yerel C# Win32 NT Kernel API (`ntdll.dll`) çağrıları ile doğrudan Windows bellek yöneticisiyle iletişim kurarak çalışır.
 
 ---
 
 ## ✨ Öne Çıkan Özellikler
 
-- **🚀 Yerel Standby List Temizliği**: Windows NT çekirdek API'si (`ntdll.dll!NtSetSystemInformation`) ve `SeProfileSingleProcessPrivilege` ayrıcalığı ile Windows Standby Memory ve Modified Page List alanlarını güvenle sıfırlar.
-- **⚡ Arka Plan Bellek Sıkıştırma (Working Set Trim)**: Win32 PSAPI (`psapi.dll!EmptyWorkingSet`) entegrasyonu ile arka planda çalışan yüzlerce uygulamanın kullanmadığı atıl RAM bloklarını serbest bırakır.
+- **🚀 Yerel Standby List & Önbellek Purge**: Windows NT çekirdek API'si (`ntdll.dll!NtSetSystemInformation`) ve `SeProfileSingleProcessPrivilege` ayrıcalığı ile Windows Standby Memory ve Modified Page List alanlarını takılma/lag yaratmadan doğrudan sıfırlar.
 - **📊 Görsel ASCII RAM Kapasite Göstergesi**: Optimizasyon öncesi ve sonrası bellek doluluk oranını terminal üzerinde grafiksel bar ile (`[######--------------] %30`) anlık olarak gösterir.
 - **🔔 Windows Masaüstü Bildirimi (Toast Notification)**: Temizlik tamamlandığında sağ alt köşeden serbest bırakılan RAM miktarını gösteren yerel Windows bildirimi sunar.
 - **🌐 DNS Ağ Önbelleği Sıfırlama**: `ipconfig /flushdns` komutu ile ağ soket önbelleğini temizler, bağlantı gecikmelerini ve takılmaları azaltır.
@@ -24,14 +23,13 @@ Batch, PowerShell ve doğrudan yerel C# Win32 API (`ntdll.dll` ve `psapi.dll`) �
 
 ## 🛠️ Nasıl Çalışır?
 
-Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı açmak için **Standby List** (Bekleme Belleği) üzerinde tutar ve çalışan işlemlere **Working Set** ayırır. Zamanla bu alanlar şişerek özellikle yüksek bellek gerektiren oyunlarda veya ağır programlarda ani takılmalara (stuttering) yol açabilir.
+Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı açmak için **Standby List** (Bekleme Belleği) üzerinde tutar. Zamanla bu alanlar GB'larca boyuta ulaşarak şişer ve özellikle yüksek bellek gerektiren oyunlarda veya ağır programlarda ani takılmalara (micro-stuttering) ve FPS düşüşlerine yol açabilir.
 
-`RAMCleaner` 5 aşamalı bir optimizasyon uygular:
+`RAMCleaner` 4 aşamalı temiz ve akıcı bir optimizasyon uygular:
 1. **DNS Ağ Önbelleği:** DNS çözümleyici önbelleğini sıfırlar.
 2. **Geçici Dosyalar & Thumbnail:** Sistem ve kullanıcı temp klasörleri ile Explorer önbelleğini temizler.
 3. **Pano Hafızası:** Pano belleğini boşaltır.
-4. **Working Set Trim:** `psapi.dll` ile tüm çalışan süreçlerin boşta duran sayfalarını temizler.
-5. **Standby Memory Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini tamamen serbest bırakır.
+4. **Standby Memory Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini ve modified listeleri anında serbest bırakır.
 
 ---
 
@@ -62,7 +60,7 @@ RAM_Temizle.bat --silent
 ```
 RAMCleaner/
 ├── RAM_Temizle.bat           # Otomatik UAC ve başlatıcı betik
-├── ClearMemory.ps1           # Görsel motor, Win32 API RAM temizleyici çekirdeği
+├── ClearMemory.ps1           # Görsel motor, Win32 NT Kernel RAM temizleyici çekirdeği
 ├── CreateDesktopShortcut.bat # Masaüstü kısayol oluşturma aracı
 ├── OtoTemizle_Kur.bat        # Windows Görev Zamanlayıcı görev kurulum aracı
 ├── OtoTemizle_Kaldir.bat     # Windows Görev Zamanlayıcı görev kaldırma aracı

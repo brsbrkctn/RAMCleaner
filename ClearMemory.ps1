@@ -89,7 +89,7 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 3: Win32 Memory & Process Cleaner API
+# BÖLÜM 3: Win32 Memory Cleaner API (Standby & Cache Purge)
 # ============================================================
 $sourceCleaner = @"
 using System;
@@ -116,15 +116,6 @@ public class MemoryCleaner {
     [DllImport("advapi32.dll", SetLastError = true)]
     public static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, int BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
 
-    [DllImport("psapi.dll", SetLastError = true)]
-    public static extern bool EmptyWorkingSet(IntPtr hProcess);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern bool CloseHandle(IntPtr hObject);
-
     public static bool EnablePrivilege(string privilege) {
         IntPtr token;
         if (OpenProcessToken(Process.GetCurrentProcess().Handle, 0x0020, out token)) {
@@ -138,50 +129,26 @@ public class MemoryCleaner {
         return false;
     }
 
-    public static int TrimAllProcessesWorkingSet() {
-        int trimmedCount = 0;
-        Process[] processes = Process.GetProcesses();
-        foreach (Process p in processes) {
-            try {
-                if (p.Id == 0 || p.Id == 4) continue;
-                IntPtr hProcess = OpenProcess(0x001F0FFF, false, p.Id);
-                if (hProcess != IntPtr.Zero) {
-                    if (EmptyWorkingSet(hProcess)) {
-                        trimmedCount++;
-                    }
-                    CloseHandle(hProcess);
-                }
-            } catch {}
-        }
-        return trimmedCount;
-    }
-
     public static uint ClearStandbyMemory() {
         EnablePrivilege("SeProfileSingleProcessPrivilege");
         EnablePrivilege("SeIncreaseQuotaPrivilege");
         
         uint result = 0;
 
-        // 1. Empty system working sets
-        int command = 2;
+        // 1. Flush modified list
+        int command = 3;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        // 2. Flush modified list
-        command = 3;
-        result |= NtSetSystemInformation(80, ref command, 4);
-
-        System.Threading.Thread.Sleep(120);
-
-        // 3. Purge all standby memory lists
+        // 2. Purge standby list
         command = 4;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        // 4. Purge low priority standby list
+        // 3. Purge low priority standby list
         command = 5;
         result |= NtSetSystemInformation(80, ref command, 4);
 
-        // 5. Second pass purge to eliminate all newly transitioned pages
-        command = 4;
+        // 4. Empty system working sets
+        command = 2;
         result |= NtSetSystemInformation(80, ref command, 4);
 
         return result;
@@ -336,13 +303,7 @@ Execute-Step -Title "Pano (Clipboard) Hafızası           " -Action {
     return @{ Detail = "(Boşaltıldı)" }
 }
 
-# 4. Working Set Trim
-Execute-Step -Title "Arka Plan Uygulama Bellek Trim       " -Action {
-    $count = [MemoryCleaner]::TrimAllProcessesWorkingSet()
-    return @{ Detail = "($count işlem optimize edildi)" }
-}
-
-# 5. Standby List Purge
+# 4. Standby List & Memory Purge
 Execute-Step -Title "RAM Standby List & Önbellek Purge   " -Action {
     [MemoryCleaner]::ClearStandbyMemory() | Out-Null
     return @{ Detail = "(Tamamlandı)" }
