@@ -89,12 +89,13 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 3: Win32 Memory Cleaner API (Zero-Disk Standby Purge)
+# BÖLÜM 3: Win32 Memory Cleaner Engine (Safe & High Performance)
 # ============================================================
 $sourceCleaner = @"
 using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 public class MemoryCleaner {
     [DllImport("ntdll.dll")]
@@ -106,7 +107,7 @@ public class MemoryCleaner {
     [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
     public static extern bool LookupPrivilegeValue(string lpSystemName, string lpName, out long lpLuid);
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct TOKEN_PRIVILEGES {
         public int PrivilegeCount;
         public long Luid;
@@ -116,17 +117,66 @@ public class MemoryCleaner {
     [DllImport("advapi32.dll", SetLastError = true)]
     public static extern bool AdjustTokenPrivileges(IntPtr TokenHandle, bool DisableAllPrivileges, ref TOKEN_PRIVILEGES NewState, int BufferLength, IntPtr PreviousState, IntPtr ReturnLength);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr GetCurrentProcess();
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
+    [DllImport("psapi.dll", SetLastError = true)]
+    public static extern bool EmptyWorkingSet(IntPtr hProcess);
+
     public static bool EnablePrivilege(string privilege) {
         IntPtr token;
-        if (OpenProcessToken(Process.GetCurrentProcess().Handle, 0x0020 | 0x0008, out token)) {
+        if (OpenProcessToken(GetCurrentProcess(), 0x0020 | 0x0008, out token)) {
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES();
             tp.PrivilegeCount = 1;
             tp.Attributes = 2; // SE_PRIVILEGE_ENABLED
             if (LookupPrivilegeValue(null, privilege, out tp.Luid)) {
-                return AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+                bool res = AdjustTokenPrivileges(token, false, ref tp, 0, IntPtr.Zero, IntPtr.Zero);
+                CloseHandle(token);
+                return res;
             }
+            CloseHandle(token);
         }
         return false;
+    }
+
+    // Critical Windows OS, Driver & Shell processes that MUST NEVER be trimmed to prevent mouse/UI lag
+    private static readonly HashSet<string> ExcludedProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+        "idle", "system", "registry", "smss", "csrss", "wininit",
+        "services", "lsass", "winlogon", "dwm", "explorer",
+        "fontdrvhost", "svchost", "audiodg", "systemsettings",
+        "textinputhost", "searchapp", "searchindexer", "shellexperiencehost",
+        "startmenuexperiencehost", "securityhealthservice", "msmpeng",
+        "nvsphelper64", "nvcontainer", "ctfmon", "spoolsv", "antigravity"
+    };
+
+    public static int OptimizeUserApplications() {
+        int trimmedCount = 0;
+        Process[] processes = Process.GetProcesses();
+        foreach (Process p in processes) {
+            try {
+                if (p.Id == 0 || p.Id == 4) continue;
+                string name = p.ProcessName;
+                if (ExcludedProcesses.Contains(name)) continue;
+
+                // Only trim user apps holding more than 25MB of RAM
+                if (p.WorkingSet64 > 25 * 1024 * 1024) {
+                    IntPtr hProcess = OpenProcess(0x001F0FFF, false, p.Id);
+                    if (hProcess != IntPtr.Zero) {
+                        if (EmptyWorkingSet(hProcess)) {
+                            trimmedCount++;
+                        }
+                        CloseHandle(hProcess);
+                    }
+                }
+            } catch {}
+        }
+        return trimmedCount;
     }
 
     public static uint ClearStandbyMemory() {
@@ -135,7 +185,7 @@ public class MemoryCleaner {
         
         uint result = 0;
 
-        // Command 4: MemoryPurgeStandbyList (Safely moves cached pages to Free list with 0 disk write)
+        // Command 4: MemoryPurgeStandbyList (Zero disk IO, instantly moves standby pages to free list)
         int command = 4;
         result |= NtSetSystemInformation(80, ref command, 4);
 
@@ -244,33 +294,40 @@ Execute-Step -Title "DNS Ağ Önbelleği Temizliği         " -Action {
     return @{ Detail = "(Sıfırlandı)" }
 }
 
-# 2. Temp Dosyaları Temizliği (Hafif ve Güvenli)
+# 2. Temp Dosyaları Temizliği
 Execute-Step -Title "Geçici Dosyalar Temizliği           " -Action {
-    $tempCleaned = 0
-    $tempBytes = 0
+    [double]$tempBytes = 0
 
-    $userTemp = [System.IO.Path]::GetTempPath()
-    if (Test-Path $userTemp) {
-        $files = Get-ChildItem $userTemp -Recurse -Force -ErrorAction SilentlyContinue
-        if ($files) {
-            $tempBytes += ($files | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
-            $tempCleaned += $files.Count
-            $files | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+    try {
+        $userTemp = [System.IO.Path]::GetTempPath()
+        if (Test-Path $userTemp) {
+            $files = Get-ChildItem -Path $userTemp -Recurse -Force -ErrorAction SilentlyContinue
+            if ($files) {
+                $measure = $files | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue
+                if ($measure -and $measure.Sum) {
+                    $tempBytes += [double]$measure.Sum
+                }
+                $files | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue *>$null
+            }
         }
-    }
+    } catch {}
 
-    $winTemp = "$env:SystemRoot\Temp"
-    if (Test-Path $winTemp) {
-        $winFiles = Get-ChildItem $winTemp -Recurse -Force -ErrorAction SilentlyContinue
-        if ($winFiles) {
-            $tempBytes += ($winFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
-            $tempCleaned += $winFiles.Count
-            $winFiles | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue
+    try {
+        $winTemp = "$env:SystemRoot\Temp"
+        if (Test-Path $winTemp) {
+            $winFiles = Get-ChildItem -Path $winTemp -Recurse -Force -ErrorAction SilentlyContinue
+            if ($winFiles) {
+                $winMeasure = $winFiles | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue
+                if ($winMeasure -and $winMeasure.Sum) {
+                    $tempBytes += [double]$winMeasure.Sum
+                }
+                $winFiles | Remove-Item -Recurse -Force -Confirm:$false -ErrorAction SilentlyContinue *>$null
+            }
         }
-    }
+    } catch {}
 
-    $freedDiskMB = [Math]::Round($tempBytes / 1MB, 1)
-    if ($freedDiskMB -gt 0) {
+    if ($tempBytes -gt 0) {
+        $freedDiskMB = [Math]::Round($tempBytes / 1MB, 1)
         return @{ Detail = "(+$freedDiskMB MB Disk Alanı)" }
     } else {
         return @{ Detail = "(Temiz)" }
@@ -285,7 +342,13 @@ Execute-Step -Title "Pano (Clipboard) Hafızası           " -Action {
     return @{ Detail = "(Boşaltıldı)" }
 }
 
-# 4. Standby List Purge (Zero Disk IO, Instant Free Memory)
+# 4. Safe User App Optimization (Protects all OS/DWM/Drivers)
+Execute-Step -Title "Uygulama Bellek Optimizasyonu      " -Action {
+    $count = [MemoryCleaner]::OptimizeUserApplications()
+    return @{ Detail = "($count uygulama optimize edildi)" }
+}
+
+# 5. Standby List Purge (Zero Disk IO, Instant Free Memory)
 Execute-Step -Title "RAM Standby List & Önbellek Purge   " -Action {
     [MemoryCleaner]::ClearStandbyMemory() | Out-Null
     return @{ Detail = "(Tamamlandı)" }

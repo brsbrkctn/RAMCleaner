@@ -2,17 +2,18 @@
 
 **RAMCleaner**, Windows 10 ve Windows 11 için geliştirilmiş, harici hiçbir üçüncü parti yazılım veya kütüphaneye ihtiyaç duymayan (**sıfır bağımlılık**), açık kaynaklı bir RAM önbelleği ve sistem performansı optimizasyon aracıdır.
 
-Batch, PowerShell ve doğrudan yerel C# Win32 NT Kernel API (`ntdll.dll`) çağrıları ile doğrudan Windows bellek yöneticisiyle iletişim kurarak çalışır.
+Batch, PowerShell ve doğrudan yerel C# Win32 API (`ntdll.dll`, `advapi32.dll`, `psapi.dll`) çağrıları ile doğrudan Windows bellek yöneticisiyle iletişim kurarak çalışır.
 
 ---
 
 ## ✨ Öne Çıkan Özellikler
 
-- **🚀 Yerel Standby List & Önbellek Purge**: Windows NT çekirdek API'si (`ntdll.dll!NtSetSystemInformation`) ve `SeProfileSingleProcessPrivilege` ayrıcalığı ile Windows Standby Memory ve Modified Page List alanlarını takılma/lag yaratmadan doğrudan sıfırlar.
+- **🚀 Güvenli & Akıllı Uygulama Bellek Optimizasyonu**: Chrome, Discord, Spotify, Steam gibi arka planda şişen üçüncü parti kullanıcı uygulamalarının atıl RAM bloklarını serbest bırakır. `dwm.exe` (Masaüstü Yöneticisi), fare/ses sürücüleri ve Windows sistem süreçlerini **100% korur**, böylece **asla fare/yazı takılması veya donma yaşanmaz**.
+- **⚡ Yerel Standby List & Önbellek Purge**: Windows NT çekirdek API'si (`ntdll.dll!NtSetSystemInformation`) ve `SeProfileSingleProcessPrivilege` ayrıcalığı ile Windows Standby Memory ve Modified Page List alanlarını diske yük bindirmeden doğrudan sıfırlar.
 - **📊 Görsel ASCII RAM Kapasite Göstergesi**: Optimizasyon öncesi ve sonrası bellek doluluk oranını terminal üzerinde grafiksel bar ile (`[######--------------] %30`) anlık olarak gösterir.
 - **🔔 Windows Masaüstü Bildirimi (Toast Notification)**: Temizlik tamamlandığında sağ alt köşeden serbest bırakılan RAM miktarını gösteren yerel Windows bildirimi sunar.
 - **🌐 DNS Ağ Önbelleği Sıfırlama**: `ipconfig /flushdns` komutu ile ağ soket önbelleğini temizler, bağlantı gecikmelerini ve takılmaları azaltır.
-- **🗑️ Geçici Dosyalar & Thumbnail Cache Temizliği**: `%TEMP%`, `C:\Windows\Temp` dizinlerindeki çöp dosyaları ve bozulmuş Windows Explorer küçük resim veritabanlarını (`thumbcache_*.db`) güvenle siler.
+- **🗑️ Geçici Dosyalar Temizliği**: `%TEMP%` ve `C:\Windows\Temp` dizinlerindeki çöp dosyaları güvenle siler.
 - **📋 Pano (Clipboard) Boşaltma**: Hafızada asılı kalan pano kopyalama verilerini sıfırlar.
 - **🖤 Şık Siyah Terminal Teması & ASCII Logo**: Mavi ekran yanıp sönmesi olmadan doğrudan siyah arka plan ve okunaklı 16pt Consolas fontuyla açılır.
 - **🤫 Sessiz Arka Plan Modu (`--silent`)**: Konsol penceresi açılmadan arka planda sessizce çalıştırılabilme desteği.
@@ -23,13 +24,14 @@ Batch, PowerShell ve doğrudan yerel C# Win32 NT Kernel API (`ntdll.dll`) çağr
 
 ## 🛠️ Nasıl Çalışır?
 
-Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı açmak için **Standby List** (Bekleme Belleği) üzerinde tutar. Zamanla bu alanlar GB'larca boyuta ulaşarak şişer ve özellikle yüksek bellek gerektiren oyunlarda veya ağır programlarda ani takılmalara (micro-stuttering) ve FPS düşüşlerine yol açabilir.
+Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı açmak için **Standby List** (Bekleme Belleği) üzerinde tutar ve arka plandaki uygulamalar zamanla şişer.
 
-`RAMCleaner` 4 aşamalı temiz ve akıcı bir optimizasyon uygular:
+`RAMCleaner` 5 aşamalı dengeli ve akıcı bir optimizasyon uygular:
 1. **DNS Ağ Önbelleği:** DNS çözümleyici önbelleğini sıfırlar.
-2. **Geçici Dosyalar & Thumbnail:** Sistem ve kullanıcı temp klasörleri ile Explorer önbelleğini temizler.
+2. **Geçici Dosyalar:** Sistem ve kullanıcı temp klasörlerini temizler.
 3. **Pano Hafızası:** Pano belleğini boşaltır.
-4. **Standby Memory Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini ve modified listeleri anında serbest bırakır.
+4. **Güvenli Uygulama Bellek Trim:** Sadece üçüncü parti ağır uygulamaların atıl sayfalarını boşaltır; Windows ve grafik motorunu korur.
+5. **Standby Memory Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini serbest bırakır.
 
 ---
 
