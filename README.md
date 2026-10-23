@@ -40,7 +40,7 @@ Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı a
 ## 🚀 Kurulum ve Kullanım
 
 ### Hızlı Başlangıç
-1. En son sürümü [GitHub Releases](https://github.com/brsbrkctn/RAMCleaner/releases) sayfasından indirin (`RAMCleaner-v1.5.0.zip`).
+1. En son sürümü [GitHub Releases](https://github.com/brsbrkctn/RAMCleaner/releases) sayfasından indirin (`RAMCleaner-v1.5.1.zip`).
 2. Zip arşivini istediğiniz bir klasöre çıkartın.
 3. `CreateDesktopShortcut.bat` dosyasını çalıştırarak masaüstünüze yönetici yetkili kısayolu oluşturun.
 4. Masaüstündeki `RAM Temizle` kısayoluna çift tıklayarak tek tıkla RAM'inizi ferahlatın!

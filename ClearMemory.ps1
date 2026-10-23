@@ -6,7 +6,7 @@
 $ConfirmPreference = 'None'
 $ErrorActionPreference = 'SilentlyContinue'
 
-# RAM and System Optimizer v1.5.0
+# RAM and System Optimizer v1.5.1
 # Developed by Barış Berke Çetin
 
 # ============================================================
@@ -78,7 +78,7 @@ if (-not $Silent) {
         [ConsoleFontManager]::DisableQuickEdit()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.5.0"
+    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.5.1"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -101,7 +101,7 @@ if (-not $Silent) {
     Write-Host "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝     ╚═════╝ ╚══════╝╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝ ╚══════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
-    Write-Host "                                   v1.5.0" -ForegroundColor DarkGray
+    Write-Host "                                   v1.5.1" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  [i] Barış Berke Çetin 2026  |  github.com/brsbrkctn" -ForegroundColor DarkGray
     Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
@@ -113,7 +113,7 @@ if (-not $Silent) {
 # ============================================================
 function Invoke-RAMCleanerAutoUpdate {
     param(
-        [string]$CurrentVersion = "1.5.0",
+        [string]$CurrentVersion = "1.5.1",
         [string]$ScriptDir = $PSScriptRoot
     )
 
@@ -210,7 +210,7 @@ function Invoke-RAMCleanerAutoUpdate {
 }
 
 if (-not $Silent -and -not $SkipUpdate) {
-    Invoke-RAMCleanerAutoUpdate -CurrentVersion "1.5.0" -ScriptDir $PSScriptRoot
+    Invoke-RAMCleanerAutoUpdate -CurrentVersion "1.5.1" -ScriptDir $PSScriptRoot
 }
 
 # ============================================================

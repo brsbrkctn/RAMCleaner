@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-10-23
+
+### Added
+- **Visual Status Feedback for Startup Update Check**: Real-time console status feedback on startup (`[*] Sürüm Denetimi : Kontrol ediliyor...`), confirming latest version (`[OK] Sürüm Denetimi : v1.5.1 (En güncel sürüm)`), new version detection (`[*] Sürüm Denetimi : Yeni sürüm bulundu!`), or offline mode indicator (`[i] Sürüm Denetimi : Çevrimdışı mod`).
+
+### Fixed
+- Fixed silent auto-updater pass-through when current version matches remote, providing clear on-screen confirmation of update checks.
+
 ## [1.5.0] - 2026-10-23
 
 ### Added
