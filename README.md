@@ -8,6 +8,7 @@ Batch, PowerShell ve doğrudan yerel C# Win32 API (`ntdll.dll`, `advapi32.dll`, 
 
 ## ✨ Öne Çıkan Özellikler
 
+- **🔄 Akıllı Kendi Kendini Güncelleme (In-Place Auto-Update)**: Program her açıldığında GitHub API üzerinden yeni sürüm olup olmadığını ~0.3 saniyede arka planda sessizce kontrol eder; yeni sürüm varsa en güncel paketi indirip dosyalarını otomatik günceller. İnternet yoksa veya yavaşsa kullanıcıyı asla bekletmeden anında mevcut sürümle temizliği başlatır.
 - **🛡️ Anti-Freeze (QuickEdit Bloke) Donma Koruması**: Konsol penceresinde herhangi bir yere tıklandığında veya fare sürüklendiğinde Windows'un metin seçim moduna girip programın iş parçacığını askıya almasını (dondurmasını) yerel Win32 Console API (`SetConsoleMode`) ile engeller.
 - **⚡ Çift Pencere ve Gecikme Önleme**: Masaüstü kısayolu doğrudan yerel `RunAsAdministrator` bayrağı ile oluşturularak açılıştaki gereksiz boş CMD bekleme ekranını tamamen ortadan kaldırır.
 - **🚀 Yerel Standby List & Önbellek Purge**: Windows NT çekirdek API'si (`ntdll.dll!NtSetSystemInformation`) ve `SeProfileSingleProcessPrivilege` ayrıcalığı ile Windows Standby Memory ve Modified Page List alanlarını diske yük bindirmeden doğrudan sıfırlar.
@@ -27,21 +28,22 @@ Batch, PowerShell ve doğrudan yerel C# Win32 API (`ntdll.dll`, `advapi32.dll`, 
 
 Windows Bellek Yöneticisi, açılan dosya ve uygulamaları daha sonra hızlı açmak için **Standby List** (Bekleme Belleği) üzerinde tutar. Zamanla bu alanlar gigabaytlarca boyuta ulaşarak şişebilir ve özellikle yüksek bellek gerektiren oyunlarda veya ağır programlarda ani takılmalara (stuttering) ve FPS düşüşlerine yol açabilir.
 
-`RAMCleaner` 4 aşamalı hafif, dengeli ve ultra hızlı bir optimizasyon uygular:
-1. **DNS Ağ Önbelleği:** DNS çözümleyici önbelleğini sıfırlar.
-2. **Geçici Dosyalar:** Sistem ve kullanıcı temp klasörlerini temizler.
-3. **Pano Hafızası:** Pano belleğini boşaltır.
-4. **RAM Standby Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini ve modified listeleri anında serbest bırakır.
+`RAMCleaner` hafif, dengeli ve ultra hızlı bir optimizasyon uygular:
+1. **Otomatik Güncelleme:** GitHub API ile yeni sürüm kontrol edilir, varsa otomatik güncellenir.
+2. **DNS Ağ Önbelleği:** DNS çözümleyici önbelleğini sıfırlar.
+3. **Geçici Dosyalar:** Sistem ve kullanıcı temp klasörlerini temizler.
+4. **Pano Hafızası:** Pano belleğini boşaltır.
+5. **RAM Standby Purge:** `ntdll.dll` çekirdek çağrısıyla beklemedeki tüm RAM önbelleğini ve modified listeleri anında serbest bırakır.
 
 ---
 
 ## 🚀 Kurulum ve Kullanım
 
 ### Hızlı Başlangıç
-1. En son sürümü [GitHub Releases](https://github.com/brsbrkctn/RAMCleaner/releases) sayfasından indirin (`RAMCleaner-v1.4.0.zip`).
+1. En son sürümü [GitHub Releases](https://github.com/brsbrkctn/RAMCleaner/releases) sayfasından indirin (`RAMCleaner-v1.5.0.zip`).
 2. Zip arşivini istediğiniz bir klasöre çıkartın.
 3. `CreateDesktopShortcut.bat` dosyasını çalıştırarak masaüstünüze yönetici yetkili kısayolu oluşturun.
-4. Masaüstündeki `RAM Temizle` kısayoluna çift tıklayarak çalıştırın.
+4. Masaüstündeki `RAM Temizle` kısayoluna çift tıklayarak tek tıkla RAM'inizi ferahlatın!
 
 ### Komut Satırından Çalıştırma
 ```cmd
@@ -63,7 +65,7 @@ RAM_Temizle.bat --silent
 ```
 RAMCleaner/
 ├── RAM_Temizle.bat           # Otomatik UAC ve başlatıcı betik
-├── ClearMemory.ps1           # Görsel motor, Win32 NT Kernel RAM temizleyici çekirdeği
+├── ClearMemory.ps1           # Görsel motor, Win32 NT Kernel RAM temizleyici ve otomatik güncelleyici
 ├── CreateDesktopShortcut.bat # Masaüstü kısayol oluşturma aracı
 ├── OtoTemizle_Kur.bat        # Windows Görev Zamanlayıcı görev kurulum aracı
 ├── OtoTemizle_Kaldir.bat     # Windows Görev Zamanlayıcı görev kaldırma aracı

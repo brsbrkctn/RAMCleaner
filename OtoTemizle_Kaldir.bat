@@ -20,7 +20,7 @@ cd /d "%~dp0"
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.4.0 - Otomatik Zamanlayici Kaldirma
+echo     RAMCleaner v1.5.0 - Otomatik Zamanlayici Kaldirma
 echo   ==============================================================
 echo.
 

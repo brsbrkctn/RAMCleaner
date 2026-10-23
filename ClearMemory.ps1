@@ -1,11 +1,12 @@
 ﻿param(
-    [switch]$Silent
+    [switch]$Silent,
+    [switch]$SkipUpdate
 )
 
 $ConfirmPreference = 'None'
 $ErrorActionPreference = 'SilentlyContinue'
 
-# RAM and System Optimizer v1.4.0
+# RAM and System Optimizer v1.5.0
 # Developed by Barış Berke Çetin
 
 # ============================================================
@@ -77,7 +78,7 @@ if (-not $Silent) {
         [ConsoleFontManager]::DisableQuickEdit()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.4.0"
+    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.5.0"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -100,7 +101,7 @@ if (-not $Silent) {
     Write-Host "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝     ╚═════╝ ╚══════╝╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝ ╚══════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
-    Write-Host "                                   v1.4.0" -ForegroundColor DarkGray
+    Write-Host "                                   v1.5.0" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  [i] Barış Berke Çetin 2026  |  github.com/brsbrkctn" -ForegroundColor DarkGray
     Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
@@ -108,7 +109,98 @@ if (-not $Silent) {
 }
 
 # ============================================================
-# BÖLÜM 3: Win32 Memory Cleaner API (Orijinal Güçlü NT Çekirdek Motoru)
+# BÖLÜM 3: Otomatik Güncelleme Kontrolü (In-Place Auto-Update)
+# ============================================================
+function Invoke-RAMCleanerAutoUpdate {
+    param(
+        [string]$CurrentVersion = "1.5.0",
+        [string]$ScriptDir = $PSScriptRoot
+    )
+
+    try {
+        if (-not $ScriptDir) {
+            $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+        }
+        if (-not $ScriptDir) {
+            $ScriptDir = (Get-Location).Path
+        }
+
+        # TLS 1.2 protokolu zorunlu (GitHub API icin)
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls
+
+        $apiUrl = "https://api.github.com/repos/brsbrkctn/RAMCleaner/releases/latest"
+        $req = [System.Net.HttpWebRequest]::Create($apiUrl)
+        $req.UserAgent = "RAMCleaner-AutoUpdate"
+        $req.Timeout = 2000
+        $req.ReadWriteTimeout = 2000
+
+        $resp = $req.GetResponse()
+        $stream = $resp.GetResponseStream()
+        $reader = New-Object System.IO.StreamReader($stream)
+        $json = $reader.ReadToEnd()
+        $reader.Close()
+        $resp.Close()
+
+        $release = $json | ConvertFrom-Json
+        $remoteTag = $release.tag_name
+        $remoteVerStr = $remoteTag -replace '^[vV]', ''
+        $localVerStr = $CurrentVersion -replace '^[vV]', ''
+
+        $remoteVer = [System.Version]$remoteVerStr
+        $localVer = [System.Version]$localVerStr
+
+        if ($remoteVer -gt $localVer) {
+            Write-Host "  [i] Yeni surum tespit edildi: " -NoNewline -ForegroundColor Cyan
+            Write-Host "$remoteTag" -NoNewline -ForegroundColor Yellow
+            Write-Host " (Mevcut: v$CurrentVersion)" -ForegroundColor DarkGray
+            Write-Host "  [*] Guncelleme indiriliyor, lutfen bekleyin..." -ForegroundColor Gray
+
+            $zipAsset = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
+            $tempZip = Join-Path $env:TEMP "RAMCleaner_Update_$remoteTag.zip"
+
+            $wc = New-Object System.Net.WebClient
+            $wc.Headers.Add("User-Agent", "RAMCleaner-AutoUpdate")
+
+            $updatedSuccessfully = $false
+            if ($zipAsset) {
+                $wc.DownloadFile($zipAsset.browser_download_url, $tempZip)
+                if (Test-Path $tempZip) {
+                    Expand-Archive -Path $tempZip -DestinationPath $ScriptDir -Force
+                    Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
+                    $updatedSuccessfully = $true
+                }
+            }
+
+            if (-not $updatedSuccessfully) {
+                # Fallback: Dogrudan guncel ClearMemory.ps1 dosyasini cek
+                $rawUrl = "https://raw.githubusercontent.com/brsbrkctn/RAMCleaner/main/ClearMemory.ps1"
+                $targetFile = Join-Path $ScriptDir "ClearMemory.ps1"
+                $wc.DownloadFile($rawUrl, $targetFile)
+                $updatedSuccessfully = $true
+            }
+
+            Write-Host "  [OK] RAMCleaner basariyla $remoteTag surumune guncellendi!" -ForegroundColor Green
+            Write-Host ""
+            Start-Sleep -Milliseconds 800
+
+            # Guncel surumle yeniden baslat ve sonsuz donguyu onle
+            $newPs1 = Join-Path $ScriptDir "ClearMemory.ps1"
+            if (Test-Path $newPs1) {
+                & $newPs1 -SkipUpdate
+                exit
+            }
+        }
+    } catch {
+        # Cevrimdisi veya ag gecikmelerinde kesintisiz devam et
+    }
+}
+
+if (-not $Silent -and -not $SkipUpdate) {
+    Invoke-RAMCleanerAutoUpdate -CurrentVersion "1.5.0" -ScriptDir $PSScriptRoot
+}
+
+# ============================================================
+# BÖLÜM 4: Win32 Memory Cleaner API (Orijinal Güçlü NT Çekirdek Motoru)
 # ============================================================
 $sourceCleaner = @"
 using System;
@@ -171,7 +263,7 @@ try {
 } catch {}
 
 # ============================================================
-# BÖLÜM 4: RAM Bilgisi & Görsel Formatlama
+# BÖLÜM 5: RAM Bilgisi & Görsel Formatlama
 # ============================================================
 function Get-RAMInfo {
     try {
@@ -216,7 +308,7 @@ if (-not $Silent -and $ramBefore) {
 }
 
 # ============================================================
-# BÖLÜM 5: Temizlik Adımları
+# BÖLÜM 6: Temizlik Adımları
 # ============================================================
 function Execute-Step {
     param(
@@ -317,7 +409,7 @@ Execute-Step -Title "RAM Standby List & Önbellek Purge   " -Action {
 }
 
 # ============================================================
-# BÖLÜM 6: Sonuç Raporu & Kapanış
+# BÖLÜM 7: Sonuç Raporu & Kapanış
 # ============================================================
 $ramAfter = Get-RAMInfo
 $freedMB = 0
