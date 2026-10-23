@@ -118,6 +118,11 @@ function Invoke-RAMCleanerAutoUpdate {
     )
 
     try {
+        if (-not $Silent) {
+            Write-Host "  [*] Sürüm Denetimi  : " -NoNewline -ForegroundColor White
+            Write-Host "Kontrol ediliyor..." -NoNewline -ForegroundColor DarkGray
+        }
+
         if (-not $ScriptDir) {
             $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
         }
@@ -125,7 +130,7 @@ function Invoke-RAMCleanerAutoUpdate {
             $ScriptDir = (Get-Location).Path
         }
 
-        # TLS 1.2 protokolu zorunlu (GitHub API icin)
+        # TLS 1.2 protokolü zorunlu (GitHub API için)
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls
 
         $apiUrl = "https://api.github.com/repos/brsbrkctn/RAMCleaner/releases/latest"
@@ -150,10 +155,9 @@ function Invoke-RAMCleanerAutoUpdate {
         $localVer = [System.Version]$localVerStr
 
         if ($remoteVer -gt $localVer) {
-            Write-Host "  [i] Yeni surum tespit edildi: " -NoNewline -ForegroundColor Cyan
-            Write-Host "$remoteTag" -NoNewline -ForegroundColor Yellow
-            Write-Host " (Mevcut: v$CurrentVersion)" -ForegroundColor DarkGray
-            Write-Host "  [*] Guncelleme indiriliyor, lutfen bekleyin..." -ForegroundColor Gray
+            Write-Host "`r  [*] Sürüm Denetimi  : " -NoNewline -ForegroundColor Cyan
+            Write-Host "Yeni sürüm bulundu ($remoteTag)!          " -ForegroundColor Yellow
+            Write-Host "  [i] Güncelleme indiriliyor, lütfen bekleyin..." -ForegroundColor Gray
 
             $zipAsset = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
             $tempZip = Join-Path $env:TEMP "RAMCleaner_Update_$remoteTag.zip"
@@ -172,26 +176,36 @@ function Invoke-RAMCleanerAutoUpdate {
             }
 
             if (-not $updatedSuccessfully) {
-                # Fallback: Dogrudan guncel ClearMemory.ps1 dosyasini cek
+                # Fallback: Doğrudan güncel ClearMemory.ps1 dosyasını çek
                 $rawUrl = "https://raw.githubusercontent.com/brsbrkctn/RAMCleaner/main/ClearMemory.ps1"
                 $targetFile = Join-Path $ScriptDir "ClearMemory.ps1"
                 $wc.DownloadFile($rawUrl, $targetFile)
                 $updatedSuccessfully = $true
             }
 
-            Write-Host "  [OK] RAMCleaner basariyla $remoteTag surumune guncellendi!" -ForegroundColor Green
+            Write-Host "  [OK] RAMCleaner başarıyla $remoteTag sürümüne güncellendi!" -ForegroundColor Green
             Write-Host ""
             Start-Sleep -Milliseconds 800
 
-            # Guncel surumle yeniden baslat ve sonsuz donguyu onle
+            # Güncel sürümle yeniden başlat ve sonsuz döngüyü önle
             $newPs1 = Join-Path $ScriptDir "ClearMemory.ps1"
             if (Test-Path $newPs1) {
                 & $newPs1 -SkipUpdate
                 exit
             }
+        } else {
+            if (-not $Silent) {
+                Write-Host "`r  [OK] Sürüm Denetimi : " -NoNewline -ForegroundColor Green
+                Write-Host "v$CurrentVersion (En güncel sürüm)       " -ForegroundColor DarkGray
+                Write-Host ""
+            }
         }
     } catch {
-        # Cevrimdisi veya ag gecikmelerinde kesintisiz devam et
+        if (-not $Silent) {
+            Write-Host "`r  [i] Sürüm Denetimi  : " -NoNewline -ForegroundColor DarkGray
+            Write-Host "Çevrimdışı mod (v$CurrentVersion)        " -ForegroundColor DarkGray
+            Write-Host ""
+        }
     }
 }
 
