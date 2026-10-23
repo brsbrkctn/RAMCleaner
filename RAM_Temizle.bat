@@ -20,7 +20,10 @@ if defined SILENT (
     exit /b
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -ArgumentList '--elevated' -Verb RunAs"
+title RAMCleaner - Yonetici Yetkisi Bekleniyor...
+echo.
+echo   [i] Yonetici izni (UAC) talep ediliyor, lutfen bekleyin...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ''%~dp0ClearMemory.ps1''' -Verb RunAs"
 exit /b
 
 :run_direct

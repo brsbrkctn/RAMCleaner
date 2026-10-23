@@ -5,11 +5,11 @@
 $ConfirmPreference = 'None'
 $ErrorActionPreference = 'SilentlyContinue'
 
-# RAM and System Optimizer v1.3.0
+# RAM and System Optimizer v1.4.0
 # Developed by Barış Berke Çetin
 
 # ============================================================
-# BÖLÜM 1: Console Background, Font & Window Manager
+# BÖLÜM 1: Console Background, Font, QuickEdit & Window Manager
 # ============================================================
 $sourceFont = @"
 using System;
@@ -34,9 +34,27 @@ public class ConsoleFontManager {
     [DllImport("kernel32.dll", SetLastError = true)]
     public static extern IntPtr GetStdHandle(int nStdHandle);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+
+    public static void DisableQuickEdit() {
+        try {
+            IntPtr hStdin = GetStdHandle(-10); // STD_INPUT_HANDLE = -10
+            uint mode;
+            if (GetConsoleMode(hStdin, out mode)) {
+                mode &= ~0x0040u; // Clear ENABLE_QUICK_EDIT_MODE (0x0040)
+                mode |= 0x0080u;  // Set ENABLE_EXTENDED_FLAGS (0x0080)
+                SetConsoleMode(hStdin, mode);
+            }
+        } catch {}
+    }
+
     public static void SetBalancedFont() {
         try {
-            IntPtr hOut = GetStdHandle(-11);
+            IntPtr hOut = GetStdHandle(-11); // STD_OUTPUT_HANDLE = -11
             CONSOLE_FONT_INFOEX info = new CONSOLE_FONT_INFOEX();
             info.cbSize = (uint)Marshal.SizeOf(info);
             info.dwFontSizeX = 0;
@@ -56,9 +74,10 @@ if (-not $Silent) {
         $Host.UI.RawUI.ForegroundColor = "White"
         Add-Type -TypeDefinition $sourceFont -ErrorAction Stop
         [ConsoleFontManager]::SetBalancedFont()
+        [ConsoleFontManager]::DisableQuickEdit()
     } catch {}
 
-    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.3.0"
+    $Host.UI.RawUI.WindowTitle = "RAM ve Sistem Performans Optimizasyonu v1.4.0"
 }
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -81,7 +100,7 @@ if (-not $Silent) {
     Write-Host "  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚═╝     ╚═╝     ╚═════╝ ╚══════╝╚══════╝ ╚═╝  ╚═╝ ╚═╝  ╚═══╝ ╚══════╝ ╚═╝  ╚═╝" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "         S İ S T E M   P E R F O R M A N S   O P T İ M İ Z A S Y O N U" -ForegroundColor Yellow
-    Write-Host "                                   v1.3.0" -ForegroundColor DarkGray
+    Write-Host "                                   v1.4.0" -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  [i] Barış Berke Çetin 2026  |  github.com/brsbrkctn" -ForegroundColor DarkGray
     Write-Host "  ─────────────────────────────────────────────────────────────────────────────────────────────" -ForegroundColor DarkGray

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-23
+
+### Added
+- **Anti-Freeze Protection (QuickEdit Block)**: Disables Windows Console `ENABLE_QUICK_EDIT_MODE` programmatically via native Win32 `SetConsoleMode` API (`kernel32.dll`), preventing unintentional mouse clicks from halting application execution.
+- **Native Elevated Desktop Shortcut**: Configures shortcut binary flag `0x20` at offset `0x15` in `CreateDesktopShortcut.bat` for direct UAC elevation, eliminating initial blank CMD window flicker.
+- **Streamlined UAC Launcher**: Improved `RAM_Temizle.bat` elevation handoff displaying clear status notice instead of a blank console screen.
+
+### Fixed
+- Fixed console thread suspension bug caused by clicking or selecting inside the PowerShell console window.
+- Eliminated redundant intermediate console window transitions during Administrator elevation.
+
 ## [1.3.0] - 2026-08-18
 
 ### Added

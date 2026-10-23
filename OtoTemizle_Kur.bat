@@ -20,7 +20,7 @@ cd /d "%~dp0"
 
 echo.
 echo   ==============================================================
-echo     RAMCleaner v1.3.0 - Otomatik Zamanlayici Kurulumu
+echo     RAMCleaner v1.4.0 - Otomatik Zamanlayici Kurulumu
 echo   ==============================================================
 echo.
 echo   Bu islem, her kullanici girisinde RAMCleaner'in arka planda
